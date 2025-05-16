@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown Timer</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --background-color: #f8f9fa;
+            --text-color: #333;
+            --error-color: #e74c3c;
+            --current-time-color: #666;
+            --clock-color: #444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .clock-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .clock {
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .clock-title {
+            font-size: 1rem;
+            color: var(--clock-color);
+            margin-bottom: 5px;
+        }
+
+        .clock-time {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .timer-display {
+            font-size: 4rem;
+            font-weight: bold;
+            margin: 20px 0;
+            font-family: monospace;
+            color: var(--secondary-color);
+        }
+
+        .completion-time {
+            font-size: 1.2rem;
+            margin: 10px 0;
+            color: #666;
+            min-height: 24px;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 100%;
+            transition: width 1s linear;
+            border-radius: 5px;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .add-time-controls {
+            display: none;
+            margin-bottom: 15px;
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            width: 60px;
+            text-align: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error {
+            color: var(--error-color);
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .timer-display {
+                font-size: 3rem;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Countdown Timer</h1>
+        
+        <div class="clock-container">
+            <div class="clock">
+                <div class="clock-title">Current Time</div>
+                <div class="clock-time" id="currentTime"></div>
+            </div>
+        </div>
+        
+        <div class="timer-display" id="display">00:00:00</div>
+        <div class="completion-time" id="completionTime"></div>
+        
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        
+        <div class="add-time-controls" id="addTimeControls">
+            <h3>Add More Time</h3>
+            <div class="controls">
+                <div>
+                    <input type="number" id="addHours" min="0" max="99" value="0" placeholder="HH">
+                    <span>h</span>
+                </div>
+                <div>
+                    <input type="number" id="addMinutes" min="0" max="59" value="0" placeholder="MM">
+                    <span>m</span>
+                </div>
+                <div>
+                    <input type="number" id="addSeconds" min="0" max="59" value="0" placeholder="SS">
+                    <span>s</span>
+                </div>
+            </div>
+            <div class="controls">
+                <button id="addTimeBtn">Add Time</button>
+                <button id="cancelAddTimeBtn">Cancel</button>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div>
+                <input type="number" id="hours" min="0" max="99" value="0" placeholder="HH">
+                <span>h</span>
+            </div>
+            <div>
+                <input type="number" id="minutes" min="0" max="59" value="0" placeholder="MM">
+                <span>m</span>
+            </div>
+            <div>
+                <input type="number" id="seconds" min="0" max="59" value="0" placeholder="SS">
+                <span>s</span>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn">Start</button>
+            <button id="pauseBtn" disabled>Pause</button>
+            <button id="resetBtn" disabled>Reset</button>
+            <button id="addTimeToggleBtn" disabled>Add Time</button>
+        </div>
+        
+        <div class="error" id="error"></div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const display = document.getElementById('display');
+            const currentTime = document.getElementById('currentTime');
+            const completionTime = document.getElementById('completionTime');
+            const progressBar = document.getElementById('progressBar');
+            const hoursInput = document.getElementById('hours');
+            const minutesInput = document.getElementById('minutes');
+            const secondsInput = document.getElementById('seconds');
+            const startBtn = document.getElementById('startBtn');
+            const pauseBtn = document.getElementById('pauseBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const addTimeToggleBtn = document.getElementById('addTimeToggleBtn');
+            const addTimeControls = document.getElementById('addTimeControls');
+            const addHoursInput = document.getElementById('addHours');
+            const addMinutesInput = document.getElementById('addMinutes');
+            const addSecondsInput = document.getElementById('addSeconds');
+            const addTimeBtn = document.getElementById('addTimeBtn');
+            const cancelAddTimeBtn = document.getElementById('cancelAddTimeBtn');
+            const errorEl = document.getElementById('error');
+            
+            // Timer Variables
+            let timer;
+            let clockTimer;
+            let totalSeconds = 0;
+            let isRunning = false;
+            let remainingSeconds = 0;
+            let initialSeconds = 0;
+            let completionDate = null;
+            let isAddingTime = false;
+            
+            // Format time as HH:MM:SS
+            function formatTime(seconds) {
+                const hrs = Math.floor(seconds / 3600);
+                const mins = Math.floor((seconds % 3600) / 60);
+                const secs = seconds % 60;
+                
+                return [
+                    hrs.toString().padStart(2, '0'),
+                    mins.toString().padStart(2, '0'),
+                    secs.toString().padStart(2, '0')
+                ].join(':');
+            }
+            
+            // Format date/time for display
+            function formatDateTime(date) {
+                const options = { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                };
+                return date.toLocaleDateString('en-US', options);
+            }
+            
+            // Format time for wall clock (HH:MM:SS AM/PM)
+            function formatWallClockTime(date) {
+                let hours = date.getHours();
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12; // Convert 0 to 12
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                const seconds = date.getSeconds().toString().padStart(2, '0');
+                
+                return `${hours}:${minutes}:${seconds} ${ampm}`;
+            }
+            
+            // Update current time display
+            function updateClockDisplays() {
+                const now = new Date();
+                currentTime.textContent = formatWallClockTime(now);
+            }
+            
+            // Update the display and progress bar
+            function updateDisplay() {
+                display.textContent = formatTime(remainingSeconds);
+                
+                // Update completion time display
+                if (completionDate) {
+                    completionTime.textContent = `Will complete on ${formatDateTime(completionDate)}`;
+                }
+                
+                // Update progress bar
+                if (initialSeconds > 0) {
+                    const progressPercentage = (remainingSeconds / initialSeconds) * 100;
+                    progressBar.style.width = `${progressPercentage}%`;
+                    
+                    // Change color when timer is near completion
+                    if (progressPercentage < 20) {
+                        progressBar.style.backgroundColor = '#e74c3c';
+                    } else if (progressPercentage < 50) {
+                        progressBar.style.backgroundColor = '#f39c12';
+                    } else {
+                        progressBar.style.backgroundColor = 'var(--primary-color)';
+                    }
+                }
+            }
+            
+            // Validate inputs
+            function validateInputs() {
+                errorEl.textContent = '';
+                completionTime.textContent = '';
+                
+                const hours = parseInt(hoursInput.value) || 0;
+                const minutes = parseInt(minutesInput.value) || 0;
+                const seconds = parseInt(secondsInput.value) || 0;
+                
+                if (hours < 0 || minutes < 0 || seconds < 0) {
+                    errorEl.textContent = 'Values cannot be negative';
+                    return false;
+                }
+                
+                if (minutes > 59 || seconds > 59) {
+                    errorEl.textContent = 'Minutes and seconds must be less than 60';
+                    return false;
+                }
+                
+                totalSeconds = hours * 3600 + minutes * 60 + seconds;
+                initialSeconds = totalSeconds;
+                
+                if (totalSeconds <= 0) {
+                    errorEl.textContent = 'Please set a time greater than 0';
+                    return false;
+                }
+                
+                remainingSeconds = totalSeconds;
+                
+                // Calculate completion date
+                const now = new Date();
+                completionDate = new Date(now.getTime() + totalSeconds * 1000);
+                
+                updateDisplay();
+                return true;
+            }
+            
+            // Validate add time inputs
+            function validateAddTimeInputs() {
+                errorEl.textContent = '';
+                
+                const hours = parseInt(addHoursInput.value) || 0;
+                const minutes = parseInt(addMinutesInput.value) || 0;
+                const seconds = parseInt(addSecondsInput.value) || 0;
+                
+                if (hours < 0 || minutes < 0 || seconds < 0) {
+                    errorEl.textContent = 'Values cannot be negative';
+                    return false;
+                }
+                
+                if (minutes > 59 || seconds > 59) {
+                    errorEl.textContent = 'Minutes and seconds must be less than 60';
+                    return false;
+                }
+                
+                if (hours === 0 && minutes === 0 && seconds === 0) {
+                    errorEl.textContent = 'Please add some time';
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            // Start the timer
+            function startTimer() {
+                if (!validateInputs()) return;
+                
+                isRunning = true;
+                startBtn.disabled = true;
+                pauseBtn.disabled = false;
+                resetBtn.disabled = false;
+                addTimeToggleBtn.disabled = false;
+                hoursInput.disabled = true;
+                minutesInput.disabled = true;
+                secondsInput.disabled = true;
+                
+                // Recalculate completion date when starting
+                const now = new Date();
+                completionDate = new Date(now.getTime() + remainingSeconds * 1000);
+                updateDisplay();
+                
+                timer = setInterval(() => {
+                    remainingSeconds--;
+                    updateDisplay();
+                    
+                    if (remainingSeconds <= 0) {
+                        clearInterval(timer);
+                        isRunning = false;
+                        startBtn.disabled = false;
+                        pauseBtn.disabled = true;
+                        resetBtn.disabled = false;
+                        addTimeToggleBtn.disabled = true;
+                        hoursInput.disabled = false;
+                        minutesInput.disabled = false;
+                        secondsInput.disabled = false;
+                        
+                        // Hide add time controls if visible
+                        isAddingTime = false;
+                        addTimeControls.style.display = 'none';
+                        
+                        // Play a sound when timer completes
+                        const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3');
+                        audio.play();
+                        
+                        // Flash the display when complete
+                        let flashCount = 0;
+                        const flashInterval = setInterval(() => {
+                            display.style.visibility = display.style.visibility === 'hidden' ? 'visible' : 'hidden';
+                            flashCount++;
+                            if (flashCount >= 10) {
+                                clearInterval(flashInterval);
+                                display.style.visibility = 'visible';
+                            }
+                        }, 500);
+                        
+                        // Update completion message
+                        completionTime.textContent = `Completed on ${formatDateTime(new Date())}`;
+                    }
+                }, 1000);
+            }
+            
+            // Pause the timer
+            function pauseTimer() {
+                clearInterval(timer);
+                isRunning = false;
+                startBtn.disabled = false;
+                pauseBtn.disabled = true;
+            }
+            
+            // Reset the timer
+            function resetTimer() {
+                clearInterval(timer);
+                isRunning = false;
+                remainingSeconds = totalSeconds;
+                completionDate = null;
+                completionTime.textContent = '';
+                updateDisplay();
+                startBtn.disabled = false;
+                pauseBtn.disabled = true;
+                resetBtn.disabled = true;
+                addTimeToggleBtn.disabled = true;
+                hoursInput.disabled = false;
+                minutesInput.disabled = false;
+                secondsInput.disabled = false;
+                
+                // Hide add time controls if visible
+                isAddingTime = false;
+                addTimeControls.style.display = 'none';
+            }
+            
+            // Show add time controls
+            function showAddTimeControls() {
+                isAddingTime = true;
+                addTimeControls.style.display = 'block';
+                addHoursInput.focus();
+            }
+            
+            // Hide add time controls
+            function hideAddTimeControls() {
+                isAddingTime = false;
+                addTimeControls.style.display = 'none';
+                errorEl.textContent = '';
+                addHoursInput.value = '0';
+                addMinutesInput.value = '0';
+                addSecondsInput.value = '0';
+            }
+            
+            // Add time to running timer
+            function addTime() {
+                if (!validateAddTimeInputs()) return;
+                
+                const hours = parseInt(addHoursInput.value) || 0;
+                const minutes = parseInt(addMinutesInput.value) || 0;
+                const seconds = parseInt(addSecondsInput.value) || 0;
+                
+                const additionalSeconds = hours * 3600 + minutes * 60 + seconds;
+                
+                // Add time to remaining seconds and initial seconds (for progress bar)
+                remainingSeconds += additionalSeconds;
+                initialSeconds += additionalSeconds;
+                
+                // Recalculate completion date
+                const now = new Date();
+                completionDate = new Date(now.getTime() + remainingSeconds * 1000);
+                
+                hideAddTimeControls();
+                updateDisplay();
+            }
+            
+            // Initialize clock
+            updateClockDisplays();
+            clockTimer = setInterval(updateClockDisplays, 1000);
+            
+            // Event listeners
+            startBtn.addEventListener('click', startTimer);
+            pauseBtn.addEventListener('click', pauseTimer);
+            resetBtn.addEventListener('click', resetTimer);
+            addTimeToggleBtn.addEventListener('click', showAddTimeControls);
+            addTimeBtn.addEventListener('click', addTime);
+            cancelAddTimeBtn.addEventListener('click', hideAddTimeControls);
+            
+            // Input validation on change
+            [hoursInput, minutesInput, secondsInput].forEach(input => {
+                input.addEventListener('change', validateInputs);
+            });
+            
+            [addHoursInput, addMinutesInput, addSecondsInput].forEach(input => {
+                input.addEventListener('change', validateAddTimeInputs);
+            });
+        });
+    </script>
+</body>
+</html>
